@@ -19,7 +19,7 @@ namespace SystemProgramming.Lesson2Jobs
 
         private bool _inProgress;
         private NativeArray<int> _intNative;
-        private MyTask _myTask;
+        private MyTaskOne _myTask;
         private JobHandle _jobHandle;
 
         private void Update()
@@ -30,7 +30,7 @@ namespace SystemProgramming.Lesson2Jobs
                 _inProgress = true;
                 _intNative = new NativeArray<int>(_intArray, Allocator.Persistent);
 
-                _myTask = new MyTask
+                _myTask = new MyTaskOne
                 {
                     IntArrayIn = _intNative,
                     ZeroFactor = _zeroFactor
@@ -54,7 +54,7 @@ namespace SystemProgramming.Lesson2Jobs
             }
         }
 
-        private struct MyTask : IJob
+        private struct MyTaskOne : IJob
         {
             public NativeArray<int> IntArrayIn;
             public int ZeroFactor;

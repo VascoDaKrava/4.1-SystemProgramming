@@ -53,7 +53,7 @@ namespace SystemProgramming.Lesson2Jobs
 
         private void Update()
         {
-            GravitationJob gravitationJob = new GravitationJob()
+            GravitationJob gravitationJob = new()
             {
                 Positions = _positions,
                 Velocities = _velocities,
@@ -65,7 +65,7 @@ namespace SystemProgramming.Lesson2Jobs
 
             JobHandle gravitationHandle = gravitationJob.Schedule(_numberOfEntities, 0);
 
-            MoveJob moveJob = new MoveJob()
+            MoveJob moveJob = new()
             {
                 Positions = _positions,
                 Velocities = _velocities,
@@ -73,8 +73,7 @@ namespace SystemProgramming.Lesson2Jobs
                 DeltaTime = Time.deltaTime
             };
 
-            JobHandle moveHandle = moveJob.Schedule(_transformAccessArray,
-            gravitationHandle);
+            JobHandle moveHandle = moveJob.Schedule(_transformAccessArray, gravitationHandle);
             moveHandle.Complete();
         }
 
