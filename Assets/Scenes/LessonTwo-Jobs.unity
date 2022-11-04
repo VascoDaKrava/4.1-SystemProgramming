@@ -157,13 +157,13 @@ MonoBehaviour:
   _randomize: 0
   _arrayLength: 1000
   _positions:
-  - {x: 0, y: 0, z: 0}
   - {x: 1, y: 1, z: 1}
   - {x: 2, y: 2, z: 2}
+  - {x: 3, y: 3, z: 3}
   _velocities:
   - {x: 10, y: 10, z: 10}
-  - {x: 10, y: 10, z: 10}
-  - {x: 10, y: 10, z: 10}
+  - {x: 100, y: 100, z: 100}
+  - {x: 1000, y: 1000, z: 1000}
 --- !u!114 &287412005
 MonoBehaviour:
   m_ObjectHideFlags: 0
