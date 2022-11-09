@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -6,16 +7,23 @@ using UnityEngine.Networking;
 
 namespace SystemProgramming.Lesson3LLAPI
 {
+    [Obsolete]
     public sealed class Server : MonoBehaviour
     {
+        public event Action<bool> OnServerChangeState;
+
         private const int MAX_CONNECTION = 10;
 
-        private int _port = 5805;
-        private int _hostID;
-        private int _reliableChannel;
-        private bool _isStarted = false;
-        private byte _error;
-        private List<int> _connectionIDs = new();
+        [SerializeField] private int _hostID;
+        [SerializeField] private int _port = 5805;
+        [SerializeField] private int _reliableChannel;
+
+        [Space]
+        [SerializeField] private bool _isStarted = false;
+        [SerializeField] private byte _error;
+
+        [Space]
+        [SerializeField] private List<int> _connectionIDs = new();
 
         public void StartServer()
         {
@@ -25,14 +33,20 @@ namespace SystemProgramming.Lesson3LLAPI
             HostTopology topology = new HostTopology(cc, MAX_CONNECTION);
             _hostID = NetworkTransport.AddHost(topology, _port);
             _isStarted = true;
+            OnServerChangeState.Invoke(_isStarted);
         }
 
         public void ShutDownServer()
         {
-            if (!_isStarted) return;
+            if (!_isStarted)
+            {
+                return;
+            }
+
             NetworkTransport.RemoveHost(_hostID);
             NetworkTransport.Shutdown();
             _isStarted = false;
+            OnServerChangeState.Invoke(_isStarted);
         }
 
         private void Update()
@@ -42,45 +56,58 @@ namespace SystemProgramming.Lesson3LLAPI
                 return;
             }
 
-            int recHostId;
-            int connectionId;
-            int channelId;
-            byte[] recBuffer = new byte[1024];
+            int sourceHostID;
+            int connectionID;
+            int channelID;
             int bufferSize = 1024;
+            byte[] buffer = new byte[bufferSize];
             int dataSize;
+            int stopFactor = 5;
 
-            NetworkEventType recData = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, bufferSize, out dataSize, out _error);
+            NetworkEventType recData = NetworkTransport.Receive(out sourceHostID, out connectionID, out channelID, buffer, bufferSize, out dataSize, out _error);
 
             while (recData != NetworkEventType.Nothing)
             {
+                if (sourceHostID == _hostID)
+                {
+                    Debug.Log($"Message from Host {sourceHostID} / Con {connectionID} / Ch {channelID}");
+                    stopFactor--;
+                    if (stopFactor == 0)
+                    {
+                        Debug.LogWarning("LOOP");
+                        break;
+                    }
+                    continue;
+                }
+
                 switch (recData)
                 {
                     case NetworkEventType.Nothing:
                         break;
-               
+
                     case NetworkEventType.ConnectEvent:
-                        _connectionIDs.Add(connectionId);
-                        SendMessageToAll($"Player {connectionId} has connected.");
-                        Debug.Log($"Player {connectionId} has connected.");
+                        _connectionIDs.Add(connectionID);
+                        SendMessageToAll($"Player {connectionID} has connected.");
+                        Debug.Log($"Player {connectionID} has connected.");
                         break;
-                    
+
                     case NetworkEventType.DataEvent:
-                        string message = Encoding.Unicode.GetString(recBuffer, 0, dataSize);
-                        SendMessageToAll($"Player {connectionId}: {message}");
-                        Debug.Log($"Player {connectionId}: {message}");
+                        string message = Encoding.Unicode.GetString(buffer, 0, dataSize);
+                        SendMessageToAll($"Player {connectionID}: {message}");
+                        Debug.Log($"Player {connectionID}: {message}");
                         break;
-                    
+
                     case NetworkEventType.DisconnectEvent:
-                        _connectionIDs.Remove(connectionId);
-                        SendMessageToAll($"Player {connectionId} has disconnected.");
-                        Debug.Log($"Player {connectionId} has disconnected.");
+                        _connectionIDs.Remove(connectionID);
+                        SendMessageToAll($"Player {connectionID} has disconnected.");
+                        Debug.Log($"Player {connectionID} has disconnected.");
                         break;
-                    
+
                     case NetworkEventType.BroadcastEvent:
                         break;
                 }
 
-                recData = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, bufferSize, out dataSize, out _error);
+                recData = NetworkTransport.Receive(out sourceHostID, out connectionID, out channelID, buffer, bufferSize, out dataSize, out _error);
             }
         }
 

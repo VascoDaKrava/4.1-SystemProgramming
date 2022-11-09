@@ -6,20 +6,28 @@ using UnityEngine.Networking;
 
 namespace SystemProgramming.Lesson3LLAPI
 {
+    [Obsolete]
     public sealed class Client : MonoBehaviour
     {
-        //public delegate void OnMessageReceive(object message);
-        public event Action<object> OnMessageReceive;
+        public event Action<string> OnMessageReceive;
+        public event Action<bool> OnClientChangeState;
 
         private const int MAX_CONNECTION = 10;
 
-        private int _port = 0;
-        private int _serverPort = 5805;
-        private int _hostID;
-        private int _reliableChannel;
-        private int _connectionID;
-        private bool _isConnected = false;
-        private byte _error;
+        [SerializeField] private int _hostID;
+        [SerializeField] private int _port = 0;// 0 = random port
+        [SerializeField] private int _reliableChannel;
+
+        [Space]
+        [SerializeField] private int _connectionID;
+
+        [Space]
+        [SerializeField] private string _serverIP = "192.168.31.98";
+        [SerializeField] private int _serverPort = 5805;
+
+        [Space]
+        [SerializeField] private bool _isConnected = false;
+        [SerializeField] private byte _error;
 
         public void Connect()
         {
@@ -28,23 +36,29 @@ namespace SystemProgramming.Lesson3LLAPI
             _reliableChannel = cc.AddChannel(QosType.Reliable);
             HostTopology topology = new HostTopology(cc, MAX_CONNECTION);
             _hostID = NetworkTransport.AddHost(topology, _port);
-            _connectionID = NetworkTransport.Connect(_hostID, "127.0.0.1", _serverPort, 0, out _error);
+            _connectionID = NetworkTransport.Connect(_hostID, _serverIP, _serverPort, 0, out _error);
 
             if ((NetworkError)_error == NetworkError.Ok)
             {
                 _isConnected = true;
+                OnClientChangeState.Invoke(_isConnected);
             }
             else
             {
-                Debug.Log((NetworkError)_error);
+                Debug.LogError((NetworkError)_error);
             }
         }
 
         public void Disconnect()
         {
-            if (!_isConnected) return;
+            if (!_isConnected)
+            {
+                return;
+            }
+
             NetworkTransport.Disconnect(_hostID, _connectionID, out _error);
             _isConnected = false;
+            OnClientChangeState.Invoke(_isConnected);
         }
 
         private void Update()
@@ -72,7 +86,7 @@ namespace SystemProgramming.Lesson3LLAPI
 
                     case NetworkEventType.ConnectEvent:
                         OnMessageReceive?.Invoke($"You have been connected to server.");
-                        Debug.Log($"You have been connected to server.");
+                        Debug.LogWarning($"You have been connected to server.");
                         break;
 
                     case NetworkEventType.DataEvent:
@@ -84,7 +98,7 @@ namespace SystemProgramming.Lesson3LLAPI
                     case NetworkEventType.DisconnectEvent:
                         _isConnected = false;
                         OnMessageReceive?.Invoke($"You have been disconnected from server.");
-                        Debug.Log($"You have been disconnected from server.");
+                        Debug.LogWarning($"You have been disconnected from server.");
                         break;
 
                     case NetworkEventType.BroadcastEvent:
@@ -95,14 +109,14 @@ namespace SystemProgramming.Lesson3LLAPI
             }
         }
 
-        public void SendMessage(string message)
+        public new void SendMessage(string message)
         {
             byte[] buffer = Encoding.Unicode.GetBytes(message);
             NetworkTransport.Send(_hostID, _connectionID, _reliableChannel, buffer, message.Length * sizeof(char), out _error);
             
             if ((NetworkError)_error != NetworkError.Ok)
             {
-                Debug.Log((NetworkError)_error);
+                Debug.LogError((NetworkError)_error);
             }
         }
     }
