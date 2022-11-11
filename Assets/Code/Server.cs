@@ -14,40 +14,20 @@ namespace SystemProgramming.Lesson3LLAPI
 
         private const int MAX_CONNECTION = 10;
 
-        [SerializeField] private int _hostID;
-        [SerializeField] private int _port = 5805;
+        [SerializeField] private string _serverIP = "192.168.31.98";
+        [SerializeField] private int _serverPort = 5805;
+        [SerializeField] private int _serverSocket;
         [SerializeField] private int _reliableChannel;
+
+        [Space]
+        [SerializeField] private int _connectionID;
 
         [Space]
         [SerializeField] private bool _isStarted = false;
         [SerializeField] private byte _error;
 
         [Space]
-        [SerializeField] private List<int> _connectionIDs = new();
-
-        public void StartServer()
-        {
-            NetworkTransport.Init();
-            ConnectionConfig cc = new ConnectionConfig();
-            _reliableChannel = cc.AddChannel(QosType.Reliable);
-            HostTopology topology = new HostTopology(cc, MAX_CONNECTION);
-            _hostID = NetworkTransport.AddHost(topology, _port);
-            _isStarted = true;
-            OnServerChangeState.Invoke(_isStarted);
-        }
-
-        public void ShutDownServer()
-        {
-            if (!_isStarted)
-            {
-                return;
-            }
-
-            NetworkTransport.RemoveHost(_hostID);
-            NetworkTransport.Shutdown();
-            _isStarted = false;
-            OnServerChangeState.Invoke(_isStarted);
-        }
+        [SerializeField] private Dictionary<int, string> _connectionIDs = new();
 
         private void Update()
         {
@@ -57,72 +37,119 @@ namespace SystemProgramming.Lesson3LLAPI
             }
 
             int sourceHostID;
-            int connectionID;
-            int channelID;
+            int sourceConnectionID;
+            int sourceChannelID;
             int bufferSize = 1024;
             byte[] buffer = new byte[bufferSize];
             int dataSize;
-            int stopFactor = 5;
+            //int stopFactor = 5;
 
-            NetworkEventType recData = NetworkTransport.Receive(out sourceHostID, out connectionID, out channelID, buffer, bufferSize, out dataSize, out _error);
+            NetworkEventType networkEvent = NetworkTransport.Receive(out sourceHostID, out sourceConnectionID, out sourceChannelID, buffer, bufferSize, out dataSize, out _error);
+            string message = Encoding.Unicode.GetString(buffer, 0, dataSize);
 
-            while (recData != NetworkEventType.Nothing)
+            while (networkEvent != NetworkEventType.Nothing)
             {
-                if (sourceHostID == _hostID)
-                {
-                    Debug.Log($"Message from Host {sourceHostID} / Con {connectionID} / Ch {channelID}");
-                    stopFactor--;
-                    if (stopFactor == 0)
-                    {
-                        Debug.LogWarning("LOOP");
-                        break;
-                    }
-                    continue;
-                }
+                //if (sourceHostID == _hostID)
+                //{
+                //    Debug.Log($"Message from Host {sourceHostID} / Con {connectionID} / Ch {channelID}");
+                //    stopFactor--;
+                //    if (stopFactor == 0)
+                //    {
+                //        Debug.LogWarning("LOOP");
+                //        break;
+                //    }
+                //    continue;
+                //}
 
-                switch (recData)
+                switch (networkEvent)
                 {
                     case NetworkEventType.Nothing:
                         break;
 
                     case NetworkEventType.ConnectEvent:
-                        _connectionIDs.Add(connectionID);
-                        SendMessageToAll($"Player {connectionID} has connected.");
-                        Debug.Log($"Player {connectionID} has connected.");
+                        if (_connectionIDs.TryAdd(sourceConnectionID, "qwe"))
+                        {
+                            //SendMessageToAll($"Player {connectionID} has connected.");
+                            Debug.Log($"Recieve ConnectEvent from {sourceHostID} / {sourceConnectionID} / {sourceChannelID}.");
+                        }
+                        else
+                        {
+                            Debug.Log($"Recieve ConnectEvent from {sourceHostID} / {sourceConnectionID} / {sourceChannelID}.");
+                            Debug.LogWarning($"User exist with same ConnectionID ({sourceConnectionID})");
+                        }
                         break;
 
                     case NetworkEventType.DataEvent:
-                        string message = Encoding.Unicode.GetString(buffer, 0, dataSize);
-                        SendMessageToAll($"Player {connectionID}: {message}");
-                        Debug.Log($"Player {connectionID}: {message}");
+                        //SendMessageToAll($"Player {connectionID}: {message}");
+                        Debug.Log($"Player {sourceConnectionID}: {message}");
                         break;
 
                     case NetworkEventType.DisconnectEvent:
-                        _connectionIDs.Remove(connectionID);
-                        SendMessageToAll($"Player {connectionID} has disconnected.");
-                        Debug.Log($"Player {connectionID} has disconnected.");
+                        _connectionIDs.Remove(sourceConnectionID);
+                        //SendMessageToAll($"Player {connectionID} has disconnected.");
+                        Debug.Log($"Player {sourceConnectionID} has disconnected.");
                         break;
 
                     case NetworkEventType.BroadcastEvent:
                         break;
                 }
 
-                recData = NetworkTransport.Receive(out sourceHostID, out connectionID, out channelID, buffer, bufferSize, out dataSize, out _error);
+                networkEvent = NetworkTransport.Receive(out sourceHostID, out sourceConnectionID, out sourceChannelID, buffer, bufferSize, out dataSize, out _error);
             }
         }
 
-        public void SendMessageToAll(string message)
+        private void OnDestroy()
         {
-            for (int i = 0; i < _connectionIDs.Count; i++)
+            StopServer();
+        }
+
+        public void StartServer()
+        {
+            ConnectionConfig cc = new ConnectionConfig();
+            _reliableChannel = cc.AddChannel(QosType.Reliable);
+            HostTopology topology = new HostTopology(cc, MAX_CONNECTION);
+            NetworkTransport.Init();
+
+            _serverSocket = NetworkTransport.AddHost(topology, _serverPort);
+            // Для проверки соединения и иное, можно создать подключение на себя
+            //_connectionID = NetworkTransport.Connect(_serverSocket, _serverIP, _serverPort, 0, out _error);
+
+            if ((NetworkError)_error == NetworkError.Ok)
             {
-                SendMessage(message, _connectionIDs[i]);
+                _isStarted = true;
+                OnServerChangeState.Invoke(_isStarted);
+            }
+            else
+            {
+                Debug.LogError((NetworkError)_error);
             }
         }
 
-        public void SendMessage(string message, int connectionID)
+        public void StopServer()
+        {
+            if (!_isStarted)
+            {
+                return;
+            }
+
+            NetworkTransport.RemoveHost(_serverSocket);
+            NetworkTransport.Shutdown();
+            _isStarted = false;
+            OnServerChangeState.Invoke(_isStarted);
+        }
+
+        private void SendMessageToAll(string message)
+        {
+            foreach (var item in _connectionIDs.Keys)
+            {
+                ServerSendMessage(message, item);
+            }
+        }
+
+        private void ServerSendMessage(string message, int connectionID)
         {
             byte[] buffer = Encoding.Unicode.GetBytes(message);
-            NetworkTransport.Send(_hostID, connectionID, _reliableChannel, buffer, message.Length * sizeof(char), out _error);
+            NetworkTransport.Send(_serverSocket, connectionID, _reliableChannel, buffer, message.Length * sizeof(char), out _error);
 
             if ((NetworkError)_error != NetworkError.Ok)
             {

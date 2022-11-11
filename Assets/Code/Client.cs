@@ -14,8 +14,8 @@ namespace SystemProgramming.Lesson3LLAPI
 
         private const int MAX_CONNECTION = 10;
 
-        [SerializeField] private int _hostID;
-        [SerializeField] private int _port = 0;// 0 = random port
+        [SerializeField] private int _clientSocket;
+        [SerializeField] private int _clientPort = 0;// 0 = random port
         [SerializeField] private int _reliableChannel;
 
         [Space]
@@ -29,38 +29,6 @@ namespace SystemProgramming.Lesson3LLAPI
         [SerializeField] private bool _isConnected = false;
         [SerializeField] private byte _error;
 
-        public void Connect()
-        {
-            NetworkTransport.Init();
-            ConnectionConfig cc = new ConnectionConfig();
-            _reliableChannel = cc.AddChannel(QosType.Reliable);
-            HostTopology topology = new HostTopology(cc, MAX_CONNECTION);
-            _hostID = NetworkTransport.AddHost(topology, _port);
-            _connectionID = NetworkTransport.Connect(_hostID, _serverIP, _serverPort, 0, out _error);
-
-            if ((NetworkError)_error == NetworkError.Ok)
-            {
-                _isConnected = true;
-                OnClientChangeState.Invoke(_isConnected);
-            }
-            else
-            {
-                Debug.LogError((NetworkError)_error);
-            }
-        }
-
-        public void Disconnect()
-        {
-            if (!_isConnected)
-            {
-                return;
-            }
-
-            NetworkTransport.Disconnect(_hostID, _connectionID, out _error);
-            _isConnected = false;
-            OnClientChangeState.Invoke(_isConnected);
-        }
-
         private void Update()
         {
             if (!_isConnected)
@@ -71,15 +39,15 @@ namespace SystemProgramming.Lesson3LLAPI
             int recHostId;
             int connectionId;
             int channelId;
-            byte[] recBuffer = new byte[1024];
             int bufferSize = 1024;
+            byte[] recBuffer = new byte[bufferSize];
             int dataSize;
 
-            NetworkEventType recData = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, bufferSize, out dataSize, out _error);
+            NetworkEventType networkEvent = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, bufferSize, out dataSize, out _error);
 
-            while (recData != NetworkEventType.Nothing)
+            while (networkEvent != NetworkEventType.Nothing)
             {
-                switch (recData)
+                switch (networkEvent)
                 {
                     case NetworkEventType.Nothing:
                         break;
@@ -105,14 +73,52 @@ namespace SystemProgramming.Lesson3LLAPI
                         break;
                 }
 
-                recData = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, bufferSize, out dataSize, out _error);
+                networkEvent = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, bufferSize, out dataSize, out _error);
             }
         }
 
-        public new void SendMessage(string message)
+        private void OnDestroy()
+        {
+            ClientDisconnect();
+        }
+
+        public void ClientConnect()
+        {
+            ConnectionConfig cc = new ConnectionConfig();
+            _reliableChannel = cc.AddChannel(QosType.Reliable);
+            HostTopology topology = new HostTopology(cc, MAX_CONNECTION);
+            NetworkTransport.Init();
+
+            _clientSocket = NetworkTransport.AddHost(topology, _clientPort);
+            _connectionID = NetworkTransport.Connect(_clientSocket, _serverIP, _serverPort, 0, out _error);
+
+            if ((NetworkError)_error == NetworkError.Ok)
+            {
+                _isConnected = true;
+                OnClientChangeState.Invoke(_isConnected);
+            }
+            else
+            {
+                Debug.LogError((NetworkError)_error);
+            }
+        }
+
+        public void ClientDisconnect()
+        {
+            if (!_isConnected)
+            {
+                return;
+            }
+
+            NetworkTransport.Disconnect(_clientSocket, _connectionID, out _error);
+            _isConnected = false;
+            OnClientChangeState.Invoke(_isConnected);
+        }
+
+        public void ClientSendMessage(string message)
         {
             byte[] buffer = Encoding.Unicode.GetBytes(message);
-            NetworkTransport.Send(_hostID, _connectionID, _reliableChannel, buffer, message.Length * sizeof(char), out _error);
+            NetworkTransport.Send(_clientSocket, _connectionID, _reliableChannel, buffer, message.Length * sizeof(char), out _error);
             
             if ((NetworkError)_error != NetworkError.Ok)
             {

@@ -34,13 +34,13 @@ namespace SystemProgramming.Lesson3LLAPI
         {
             _textField.text = "";
             
-            _buttonStartServer.onClick.AddListener(() => StartServer());
-            _buttonStopServer.onClick.AddListener(() => ShutDownServer());
-            _buttonConnectClient.onClick.AddListener(() => Connect());
-            _buttonDisconnectClient.onClick.AddListener(() => Disconnect());
-            _buttonSendMessage.onClick.AddListener(() => SendMessage());
+            _buttonStartServer.onClick.AddListener(ServerStartHandler);
+            _buttonStopServer.onClick.AddListener(ServerStopHandler);
+            _buttonConnectClient.onClick.AddListener(ClientConnectHandler);
+            _buttonDisconnectClient.onClick.AddListener(ClientDisconnectHandler);
+            _buttonSendMessage.onClick.AddListener(ClientSendMessageHandler);
             
-            _client.OnMessageReceive += ReceiveMessage;
+            _client.OnMessageReceive += ClientReceiveMessageHandler;
             _client.OnClientChangeState += OnClientChangeStateHandler;
 
             _server.OnServerChangeState += OnServerChangeStateHandler;
@@ -54,7 +54,7 @@ namespace SystemProgramming.Lesson3LLAPI
             _buttonDisconnectClient.onClick.RemoveAllListeners();
             _buttonSendMessage.onClick.RemoveAllListeners();
             
-            _client.OnMessageReceive -= ReceiveMessage;
+            _client.OnMessageReceive -= ClientReceiveMessageHandler;
             _client.OnClientChangeState -= OnClientChangeStateHandler;
             
             _server.OnServerChangeState -= OnServerChangeStateHandler;
@@ -74,33 +74,33 @@ namespace SystemProgramming.Lesson3LLAPI
             _titleCliect.color = state ? _activeColor : _inactiveColor;
         }
 
-        private void StartServer()
+        private void ServerStartHandler()
         {
             _server.StartServer();
         }
 
-        private void ShutDownServer()
+        private void ServerStopHandler()
         {
-            _server.ShutDownServer();
+            _server.StopServer();
         }
 
-        private void Connect()
+        private void ClientConnectHandler()
         {
-            _client.Connect();
+            _client.ClientConnect();
         }
 
-        private void Disconnect()
+        private void ClientDisconnectHandler()
         {
-            _client.Disconnect();
+            _client.ClientDisconnect();
         }
 
-        private void SendMessage()
+        private void ClientSendMessageHandler()
         {
-            _client.SendMessage(_inputField.text);
+            _client.ClientSendMessage(_inputField.text);
             _inputField.text = "";
         }
 
-        public void ReceiveMessage(string message)
+        public void ClientReceiveMessageHandler(string message)
         {
             _textField.text = $"{message}\n{_textField.text}";
         }
