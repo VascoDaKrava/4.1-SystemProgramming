@@ -7,27 +7,58 @@ using UnityEngine.Networking;
 
 namespace SystemProgramming.Lesson3LLAPI
 {
+    [Serializable]
+    public struct ConnectionPoint
+    {
+        public int HostID;
+        public int ConnectionID;
+        public int ChannelID;
+        public string UserName;
+
+        public override string ToString()
+        {
+            return $"Host {HostID}. Connection {ConnectionID}. Channel {ChannelID}.";
+        }
+
+        public void Clear()
+        {
+            HostID = 0;
+            ConnectionID = 0;
+            ChannelID = 0;
+            UserName = "";
+        }
+
+        //public int CompareTo(object obj)
+        //{
+        //    throw new NotImplementedException();
+        //}
+    }
+
     [Obsolete]
     public sealed class Server : MonoBehaviour
     {
         public event Action<bool> OnServerChangeState;
+        public event Action<string> OnServerConsoleNewData;
+        public event Action<string> OnServerData;
 
         private const int MAX_CONNECTION = 10;
 
         [SerializeField] private string _serverIP = "192.168.31.98";
         [SerializeField] private int _serverPort = 5805;
-        [SerializeField] private int _serverSocket;
-        [SerializeField] private int _reliableChannel;
 
         [Space]
-        [SerializeField] private int _connectionID;
+        [SerializeField] private int _serverHostID;// Socket?
+        [SerializeField] private int _serverChannel;
 
         [Space]
         [SerializeField] private bool _isStarted = false;
         [SerializeField] private byte _error;
 
         [Space]
-        [SerializeField] private Dictionary<int, string> _connectionIDs = new();
+        [SerializeField]
+        private List<ConnectionPoint> _connections = new();
+
+        private ConnectionPoint _sourcePoint = new();
 
         private void Update()
         {
@@ -36,65 +67,81 @@ namespace SystemProgramming.Lesson3LLAPI
                 return;
             }
 
-            int sourceHostID;
-            int sourceConnectionID;
-            int sourceChannelID;
+            _sourcePoint.Clear();
+
             int bufferSize = 1024;
             byte[] buffer = new byte[bufferSize];
             int dataSize;
-            //int stopFactor = 5;
 
-            NetworkEventType networkEvent = NetworkTransport.Receive(out sourceHostID, out sourceConnectionID, out sourceChannelID, buffer, bufferSize, out dataSize, out _error);
+            NetworkEventType networkEvent = NetworkTransport.Receive(
+                out _sourcePoint.HostID,
+                out _sourcePoint.ConnectionID,
+                out _sourcePoint.ChannelID,
+                buffer,
+                bufferSize,
+                out dataSize,
+                out _error);
+
             string message = Encoding.Unicode.GetString(buffer, 0, dataSize);
 
             while (networkEvent != NetworkEventType.Nothing)
             {
-                //if (sourceHostID == _hostID)
-                //{
-                //    Debug.Log($"Message from Host {sourceHostID} / Con {connectionID} / Ch {channelID}");
-                //    stopFactor--;
-                //    if (stopFactor == 0)
-                //    {
-                //        Debug.LogWarning("LOOP");
-                //        break;
-                //    }
-                //    continue;
-                //}
-
                 switch (networkEvent)
                 {
                     case NetworkEventType.Nothing:
                         break;
 
                     case NetworkEventType.ConnectEvent:
-                        if (_connectionIDs.TryAdd(sourceConnectionID, "qwe"))
+                        Debug.Log($"S. Recieve ConnectEvent from {_sourcePoint}.");
+                        OnServerConsoleNewData.Invoke($"Recieve ConnectEvent from {_sourcePoint}.");
+
+                        if (_sourcePoint.HostID == _serverHostID)
                         {
-                            //SendMessageToAll($"Player {connectionID} has connected.");
-                            Debug.Log($"Recieve ConnectEvent from {sourceHostID} / {sourceConnectionID} / {sourceChannelID}.");
+                            Debug.LogWarning("S. This is our message? Do nothing.");
+                            OnServerConsoleNewData.Invoke("This is our message? Do nothing.");
+                            //break;
+                        }
+
+                        if (_connections.Contains(_sourcePoint))
+                        {
+                            Debug.LogWarning("S. User connection exist!");
+                            OnServerConsoleNewData.Invoke("User connection exist!");
                         }
                         else
                         {
-                            Debug.Log($"Recieve ConnectEvent from {sourceHostID} / {sourceConnectionID} / {sourceChannelID}.");
-                            Debug.LogWarning($"User exist with same ConnectionID ({sourceConnectionID})");
+                            Debug.LogWarning("S. Point {_sourcePoint} was added.");
+                            _connections.Add(_sourcePoint);
+                            OnServerConsoleNewData.Invoke($"Point {_sourcePoint} was added.");
+                            //SendMessageToAllPoints($"User from {_sourcePoint} has connected.");
                         }
                         break;
 
                     case NetworkEventType.DataEvent:
-                        //SendMessageToAll($"Player {connectionID}: {message}");
-                        Debug.Log($"Player {sourceConnectionID}: {message}");
+                        //SendMessageToAllPoints($"User from {sourceHostID}: {message}");
+                        Debug.Log($"S. DataEvent. From {_sourcePoint}: {message}");
+                        OnServerConsoleNewData.Invoke($"DataEvent. From {_sourcePoint}: {message}");
                         break;
 
                     case NetworkEventType.DisconnectEvent:
-                        _connectionIDs.Remove(sourceConnectionID);
+                        _connections.Remove(_sourcePoint);
+                        OnServerConsoleNewData.Invoke($"Point {_sourcePoint} was removed.");
                         //SendMessageToAll($"Player {connectionID} has disconnected.");
-                        Debug.Log($"Player {sourceConnectionID} has disconnected.");
+                        Debug.Log($"S. User {_sourcePoint} has disconnected.");
+                        OnServerConsoleNewData.Invoke($"User {_sourcePoint} has disconnected.");
                         break;
 
                     case NetworkEventType.BroadcastEvent:
                         break;
                 }
 
-                networkEvent = NetworkTransport.Receive(out sourceHostID, out sourceConnectionID, out sourceChannelID, buffer, bufferSize, out dataSize, out _error);
+                networkEvent = NetworkTransport.Receive(
+                    out _sourcePoint.HostID,
+                    out _sourcePoint.ConnectionID,
+                    out _sourcePoint.ChannelID,
+                    buffer,
+                    bufferSize,
+                    out dataSize,
+                    out _error);
             }
         }
 
@@ -106,22 +153,30 @@ namespace SystemProgramming.Lesson3LLAPI
         public void StartServer()
         {
             ConnectionConfig cc = new ConnectionConfig();
-            _reliableChannel = cc.AddChannel(QosType.Reliable);
+            _serverChannel = cc.AddChannel(QosType.Reliable);
             HostTopology topology = new HostTopology(cc, MAX_CONNECTION);
             NetworkTransport.Init();
 
-            _serverSocket = NetworkTransport.AddHost(topology, _serverPort);
-            // Для проверки соединения и иное, можно создать подключение на себя
-            //_connectionID = NetworkTransport.Connect(_serverSocket, _serverIP, _serverPort, 0, out _error);
+            _serverHostID = NetworkTransport.AddHost(topology, _serverPort, _serverIP);
+
+            // РџСЂРѕРІРµСЂРєР° РїРѕРґРєР»СЋС‡РµРЅРёСЏ РЅР° СЃРµР±СЏ
+            // var serverConnectionID = NetworkTransport.Connect(_serverSocket, _serverIP, _serverPort, 0, out _error);
 
             if ((NetworkError)_error == NetworkError.Ok)
             {
                 _isStarted = true;
                 OnServerChangeState.Invoke(_isStarted);
+                OnServerData.Invoke("");
+                OnServerData.Invoke($"Active : \t{_isStarted}");
+                OnServerData.Invoke($"Channel : \t{_serverChannel}");
+                OnServerData.Invoke($"Host : \t{_serverHostID}");
+                OnServerData.Invoke($"Port : \t\t{_serverPort}");
+                OnServerData.Invoke($"IP : \t\t{_serverIP}");
             }
             else
             {
-                Debug.LogError((NetworkError)_error);
+                Debug.LogError($"S. {(NetworkError)_error}");
+                OnServerConsoleNewData.Invoke($"S. {(NetworkError)_error}");
             }
         }
 
@@ -132,28 +187,34 @@ namespace SystemProgramming.Lesson3LLAPI
                 return;
             }
 
-            NetworkTransport.RemoveHost(_serverSocket);
+            NetworkTransport.RemoveHost(_serverHostID);
             NetworkTransport.Shutdown();
             _isStarted = false;
             OnServerChangeState.Invoke(_isStarted);
+            OnServerData.Invoke("");
+            OnServerData.Invoke($"Active : \t{_isStarted}");
         }
 
-        private void SendMessageToAll(string message)
+        private void SendMessageToAllPoints(string message)
         {
-            foreach (var item in _connectionIDs.Keys)
+            foreach (var item in _connections)
             {
                 ServerSendMessage(message, item);
             }
         }
 
-        private void ServerSendMessage(string message, int connectionID)
+        private void ServerSendMessage(string message, ConnectionPoint connectionPoint)
         {
             byte[] buffer = Encoding.Unicode.GetBytes(message);
-            NetworkTransport.Send(_serverSocket, connectionID, _reliableChannel, buffer, message.Length * sizeof(char), out _error);
+            //NetworkTransport.Send(_serverSocket, connectionPoint.ConnectionID, _reliableChannel, buffer, message.Length * sizeof(char), out _error);
+            Debug.Log($"S. Send \"{message}\" to {connectionPoint}.");
+            OnServerConsoleNewData.Invoke($"S. Send \"{message}\" to {connectionPoint}.");
+            NetworkTransport.Send(connectionPoint.HostID, connectionPoint.ConnectionID, connectionPoint.ChannelID, buffer, message.Length * sizeof(char), out _error);
 
             if ((NetworkError)_error != NetworkError.Ok)
             {
-                Debug.Log((NetworkError)_error);
+                Debug.LogError($"S. {(NetworkError)_error}");
+                OnServerConsoleNewData.Invoke($"S. {(NetworkError)_error}");
             }
         }
     }

@@ -11,15 +11,19 @@ namespace SystemProgramming.Lesson3LLAPI
     {
         public event Action<string> OnMessageReceive;
         public event Action<bool> OnClientChangeState;
+        public event Action<string> OnClientConsoleNewData;
+        public event Action<string> OnClientData;
 
         private const int MAX_CONNECTION = 10;
 
-        [SerializeField] private int _clientSocket;
-        [SerializeField] private int _clientPort = 0;// 0 = random port
-        [SerializeField] private int _reliableChannel;
+        [SerializeField] private string _clientIP = "192.168.31.148";
+        //[SerializeField] private string _clientIP = "192.168.31.98";
+        [SerializeField] private int _clientPort = 20123;// 0 = random port
 
         [Space]
-        [SerializeField] private int _connectionID;
+        [SerializeField] private int _clientHostID;// Socket?
+        [SerializeField] private int _clientConnectionID;
+        [SerializeField] private int _clientChannel;
 
         [Space]
         [SerializeField] private string _serverIP = "192.168.31.98";
@@ -44,6 +48,7 @@ namespace SystemProgramming.Lesson3LLAPI
             int dataSize;
 
             NetworkEventType networkEvent = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, bufferSize, out dataSize, out _error);
+            string message = Encoding.Unicode.GetString(recBuffer, 0, dataSize);
 
             while (networkEvent != NetworkEventType.Nothing)
             {
@@ -54,19 +59,18 @@ namespace SystemProgramming.Lesson3LLAPI
 
                     case NetworkEventType.ConnectEvent:
                         OnMessageReceive?.Invoke($"You have been connected to server.");
-                        Debug.LogWarning($"You have been connected to server.");
+                        Debug.LogWarning($"C. You have been connected to server.");
                         break;
 
                     case NetworkEventType.DataEvent:
-                        string message = Encoding.Unicode.GetString(recBuffer, 0, dataSize);
                         OnMessageReceive?.Invoke(message);
-                        Debug.Log(message);
+                        Debug.Log($"C. User catch : \"{message}\"");
                         break;
 
                     case NetworkEventType.DisconnectEvent:
                         _isConnected = false;
                         OnMessageReceive?.Invoke($"You have been disconnected from server.");
-                        Debug.LogWarning($"You have been disconnected from server.");
+                        Debug.LogWarning($"C. You have been disconnected from server.");
                         break;
 
                     case NetworkEventType.BroadcastEvent:
@@ -85,12 +89,13 @@ namespace SystemProgramming.Lesson3LLAPI
         public void ClientConnect()
         {
             ConnectionConfig cc = new ConnectionConfig();
-            _reliableChannel = cc.AddChannel(QosType.Reliable);
+            _clientChannel = cc.AddChannel(QosType.Reliable);
             HostTopology topology = new HostTopology(cc, MAX_CONNECTION);
             NetworkTransport.Init();
 
-            _clientSocket = NetworkTransport.AddHost(topology, _clientPort);
-            _connectionID = NetworkTransport.Connect(_clientSocket, _serverIP, _serverPort, 0, out _error);
+            _clientHostID = NetworkTransport.AddHost(topology, _clientPort, _clientIP);
+            //_clientHostID = NetworkTransport.AddHost(topology, _serverPort);
+            _clientConnectionID = NetworkTransport.Connect(_clientHostID, _serverIP, _serverPort, 0, out _error);
 
             if ((NetworkError)_error == NetworkError.Ok)
             {
@@ -99,7 +104,7 @@ namespace SystemProgramming.Lesson3LLAPI
             }
             else
             {
-                Debug.LogError((NetworkError)_error);
+                Debug.LogError($"C. {(NetworkError)_error}");
             }
         }
 
@@ -110,7 +115,7 @@ namespace SystemProgramming.Lesson3LLAPI
                 return;
             }
 
-            NetworkTransport.Disconnect(_clientSocket, _connectionID, out _error);
+            NetworkTransport.Disconnect(_clientHostID, _clientConnectionID, out _error);
             _isConnected = false;
             OnClientChangeState.Invoke(_isConnected);
         }
@@ -118,11 +123,11 @@ namespace SystemProgramming.Lesson3LLAPI
         public void ClientSendMessage(string message)
         {
             byte[] buffer = Encoding.Unicode.GetBytes(message);
-            NetworkTransport.Send(_clientSocket, _connectionID, _reliableChannel, buffer, message.Length * sizeof(char), out _error);
-            
+            NetworkTransport.Send(_clientHostID, _clientConnectionID, _clientChannel, buffer, message.Length * sizeof(char), out _error);
+
             if ((NetworkError)_error != NetworkError.Ok)
             {
-                Debug.LogError((NetworkError)_error);
+                Debug.LogError($"C. {(NetworkError)_error}");
             }
         }
     }

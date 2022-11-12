@@ -1,5 +1,6 @@
 using System;
 using TMPro;
+using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,13 +19,17 @@ namespace SystemProgramming.Lesson3LLAPI
         [SerializeField] private TMP_Text _titleServer;
         [SerializeField] private Button _buttonStartServer;
         [SerializeField] private Button _buttonStopServer;
+        [SerializeField] private TMP_Text _dataServerText;
+        [SerializeField] private TMP_Text _consoleServerText;
 
         [Space]
         [SerializeField] private Client _client;
-        [SerializeField] private TMP_Text _titleCliect;
+        [SerializeField] private TMP_Text _titleClient;
         [SerializeField] private Button _buttonConnectClient;
         [SerializeField] private Button _buttonDisconnectClient;
         [SerializeField] private Button _buttonSendMessage;
+        [SerializeField] private TMP_Text _dataClientText;
+        [SerializeField] private TMP_Text _consoleClientText;
 
         [Space]
         [SerializeField] private TMP_InputField _inputField;
@@ -33,17 +38,26 @@ namespace SystemProgramming.Lesson3LLAPI
         private void Start()
         {
             _textField.text = "";
-            
+            _dataClientText.text = "";
+            _consoleClientText.text = "";
+
+            _dataServerText.text = "";
+            _consoleServerText.text = "";
+
             _buttonStartServer.onClick.AddListener(ServerStartHandler);
             _buttonStopServer.onClick.AddListener(ServerStopHandler);
             _buttonConnectClient.onClick.AddListener(ClientConnectHandler);
             _buttonDisconnectClient.onClick.AddListener(ClientDisconnectHandler);
             _buttonSendMessage.onClick.AddListener(ClientSendMessageHandler);
-            
+
             _client.OnMessageReceive += ClientReceiveMessageHandler;
             _client.OnClientChangeState += OnClientChangeStateHandler;
+            _client.OnClientData += OnClientDataHandler;
+            _client.OnClientConsoleNewData += OnClientConsoleNewDataHandler;
 
             _server.OnServerChangeState += OnServerChangeStateHandler;
+            _server.OnServerData += OnServerDataHandler;
+            _server.OnServerConsoleNewData += OnServerConsoleNewDataHandler;
         }
 
         private void OnDestroy()
@@ -53,11 +67,35 @@ namespace SystemProgramming.Lesson3LLAPI
             _buttonConnectClient.onClick.RemoveAllListeners();
             _buttonDisconnectClient.onClick.RemoveAllListeners();
             _buttonSendMessage.onClick.RemoveAllListeners();
-            
+
             _client.OnMessageReceive -= ClientReceiveMessageHandler;
             _client.OnClientChangeState -= OnClientChangeStateHandler;
-            
+            _client.OnClientData -= OnClientDataHandler;
+            _client.OnClientConsoleNewData -= OnClientConsoleNewDataHandler;
+
             _server.OnServerChangeState -= OnServerChangeStateHandler;
+            _server.OnServerData -= OnServerDataHandler;
+            _server.OnServerConsoleNewData -= OnServerConsoleNewDataHandler;
+        }
+
+        private void OnClientDataHandler(string data)
+        {
+            _dataClientText.text = data.Length == 0 ? "" : $"{data}\n{_dataClientText.text}";
+        }
+
+        private void OnClientConsoleNewDataHandler(string data)
+        {
+            _consoleClientText.text = $"{data}\n{_consoleClientText.text}";
+        }
+
+        private void OnServerDataHandler(string data)
+        {
+            _dataServerText.text = data.Length == 0 ? "" : $"{data}\n{_dataServerText.text}";
+        }
+
+        private void OnServerConsoleNewDataHandler(string data)
+        {
+            _consoleServerText.text = $"{data}\n{_consoleServerText.text}";
         }
 
         private void OnServerChangeStateHandler(bool state)
@@ -71,7 +109,7 @@ namespace SystemProgramming.Lesson3LLAPI
         {
             _buttonConnectClient.interactable = !state;
             _buttonDisconnectClient.interactable = state;
-            _titleCliect.color = state ? _activeColor : _inactiveColor;
+            _titleClient.color = state ? _activeColor : _inactiveColor;
         }
 
         private void ServerStartHandler()
