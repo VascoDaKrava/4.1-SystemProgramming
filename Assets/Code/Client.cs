@@ -16,18 +16,18 @@ namespace SystemProgramming.Lesson3LLAPI
 
         private const int MAX_CONNECTION = 10;
 
-        [SerializeField] private string _clientIP = "192.168.31.148";
+        [SerializeField] public string ClientIP;// = "192.168.31.148";
         //[SerializeField] private string _clientIP = "192.168.31.98";
-        [SerializeField] private int _clientPort = 20123;// 0 = random port ?
+        [SerializeField] public int ClientPort;// = 20123;// 0 = random port ?
+
+        [Space]
+        [SerializeField] public string ServerIP;// = "192.168.31.98";
+        [SerializeField] public int ServerPort;// = 5805;
 
         [Space]
         [SerializeField] private int _clientHostID;// Socket?
         [SerializeField] private int _clientConnectionID;
         [SerializeField] private int _clientChannel;
-
-        [Space]
-        [SerializeField] private string _serverIP = "192.168.31.98";
-        [SerializeField] private int _serverPort = 5805;
 
         [Space]
         [SerializeField] private bool _isConnected = false;
@@ -96,9 +96,9 @@ namespace SystemProgramming.Lesson3LLAPI
             HostTopology topology = new HostTopology(cc, MAX_CONNECTION);
             NetworkTransport.Init();
 
-            _clientHostID = NetworkTransport.AddHost(topology, _clientPort, _clientIP);
+            _clientHostID = NetworkTransport.AddHost(topology, ClientPort, ClientIP);
             //_clientHostID = NetworkTransport.AddHost(topology, _serverPort);
-            _clientConnectionID = NetworkTransport.Connect(_clientHostID, _serverIP, _serverPort, 0, out _error);
+            _clientConnectionID = NetworkTransport.Connect(_clientHostID, ServerIP, ServerPort, 0, out _error);
 
             if ((NetworkError)_error == NetworkError.Ok)
             {
@@ -106,13 +106,13 @@ namespace SystemProgramming.Lesson3LLAPI
                 OnClientChangeState.Invoke(_isConnected);
                 OnClientData.Invoke($"");
                 OnClientData.Invoke($"Active : \t{_isConnected}");
-                OnClientData.Invoke($"Serv. Port : \t{_serverPort}");
-                OnClientData.Invoke($"Serv. IP : \t{_serverIP}");
+                OnClientData.Invoke($"Serv. Port : \t{ServerPort}");
+                OnClientData.Invoke($"Serv. IP : \t{ServerIP}");
                 OnClientData.Invoke($"Channel : \t{_clientChannel}");
                 OnClientData.Invoke($"Connect. : \t{_clientConnectionID}");
                 OnClientData.Invoke($"Host : \t{_clientHostID}");
-                OnClientData.Invoke($"Port : \t\t{_clientPort}");
-                OnClientData.Invoke($"IP : \t\t{_clientIP}");
+                OnClientData.Invoke($"Port : \t\t{ClientPort}");
+                OnClientData.Invoke($"IP : \t\t{ClientIP}");
             }
             else
             {

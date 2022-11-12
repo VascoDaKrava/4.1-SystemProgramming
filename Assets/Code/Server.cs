@@ -49,8 +49,8 @@ namespace SystemProgramming.Lesson3LLAPI
         [SerializeField] private bool _sendTest;
 
         [Space]
-        [SerializeField] private string _serverIP = "192.168.31.98";
-        [SerializeField] private int _serverPort = 5805;
+        [SerializeField] public string ServerIP;// = "192.168.31.98";
+        [SerializeField] public int ServerPort;// = 5805;
 
         [Space]
         [SerializeField] private int _serverHostID;// Socket?
@@ -169,7 +169,7 @@ namespace SystemProgramming.Lesson3LLAPI
             HostTopology topology = new HostTopology(cc, MAX_CONNECTION);
             NetworkTransport.Init();
 
-            _serverHostID = NetworkTransport.AddHost(topology, _serverPort, _serverIP);
+            _serverHostID = NetworkTransport.AddHost(topology, ServerPort, ServerIP);
 
             // Проверка подключения на себя
             // var serverConnectionID = NetworkTransport.Connect(_serverSocket, _serverIP, _serverPort, 0, out _error);
@@ -182,8 +182,8 @@ namespace SystemProgramming.Lesson3LLAPI
                 OnServerData.Invoke($"Active : \t{_isStarted}");
                 OnServerData.Invoke($"Channel : \t{_serverChannel}");
                 OnServerData.Invoke($"Host : \t{_serverHostID}");
-                OnServerData.Invoke($"Port : \t\t{_serverPort}");
-                OnServerData.Invoke($"IP : \t\t{_serverIP}");
+                OnServerData.Invoke($"Port : \t\t{ServerPort}");
+                OnServerData.Invoke($"IP : \t\t{ServerIP}");
             }
             else
             {

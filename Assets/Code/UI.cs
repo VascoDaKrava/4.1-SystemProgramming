@@ -1,6 +1,5 @@
 using System;
 using TMPro;
-using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,23 +16,30 @@ namespace SystemProgramming.Lesson3LLAPI
         [Space]
         [SerializeField] private Server _server;
         [SerializeField] private TMP_Text _titleServer;
+        [SerializeField] private Button _buttonSetServerData;
+        [SerializeField] private TMP_InputField _serverIP;
+        [SerializeField] private TMP_InputField _serverPort;
         [SerializeField] private Button _buttonStartServer;
         [SerializeField] private Button _buttonStopServer;
         [SerializeField] private TMP_Text _dataServerText;
         [SerializeField] private TMP_Text _consoleServerText;
 
         [Space]
+        [Space]
         [SerializeField] private Client _client;
         [SerializeField] private TMP_Text _titleClient;
+        [SerializeField] private Button _buttonSetClientData;
+        [SerializeField] private TMP_InputField _clientIP;
+        [SerializeField] private TMP_InputField _clientPort;
         [SerializeField] private Button _buttonConnectClient;
         [SerializeField] private Button _buttonDisconnectClient;
-        [SerializeField] private Button _buttonSendMessage;
         [SerializeField] private TMP_Text _dataClientText;
         [SerializeField] private TMP_Text _consoleClientText;
 
         [Space]
-        [SerializeField] private TMP_InputField _inputField;
         [SerializeField] private TMP_Text _textField;
+        [SerializeField] private TMP_InputField _inputField;
+        [SerializeField] private Button _buttonSendMessage;
 
         private void Start()
         {
@@ -43,6 +49,18 @@ namespace SystemProgramming.Lesson3LLAPI
 
             _dataServerText.text = "";
             _consoleServerText.text = "";
+
+            _serverIP.text = _server.ServerIP;
+            _serverPort.text = _server.ServerPort.ToString();
+
+            _clientIP.text = _client.ClientIP;
+            _clientPort.text = _client.ClientPort.ToString();
+
+            _client.ServerIP = _server.ServerIP;
+            _client.ServerPort = _server.ServerPort;
+
+            _buttonSetServerData.onClick.AddListener(SetServerDataHandler);
+            _buttonSetClientData.onClick.AddListener(SetClientDataHandler);
 
             _buttonStartServer.onClick.AddListener(ServerStartHandler);
             _buttonStopServer.onClick.AddListener(ServerStopHandler);
@@ -62,6 +80,9 @@ namespace SystemProgramming.Lesson3LLAPI
 
         private void OnDestroy()
         {
+            _buttonSetServerData.onClick.RemoveAllListeners();
+            _buttonSetClientData.onClick.RemoveAllListeners();
+
             _buttonStartServer.onClick.RemoveAllListeners();
             _buttonStopServer.onClick.RemoveAllListeners();
             _buttonConnectClient.onClick.RemoveAllListeners();
@@ -76,6 +97,20 @@ namespace SystemProgramming.Lesson3LLAPI
             _server.OnServerChangeState -= OnServerChangeStateHandler;
             _server.OnServerData -= OnServerDataHandler;
             _server.OnServerConsoleNewData -= OnServerConsoleNewDataHandler;
+        }
+
+        private void SetServerDataHandler()
+        {
+            _server.ServerIP = _serverIP.text;
+            _server.ServerPort = int.Parse(_serverPort.text);
+            _client.ServerIP = _server.ServerIP;
+            _client.ServerPort = _server.ServerPort;
+        }
+
+        private void SetClientDataHandler()
+        {
+            _client.ClientIP = _clientIP.text;
+            _client.ClientPort = int.Parse(_clientPort.text);
         }
 
         private void OnClientDataHandler(string data)
