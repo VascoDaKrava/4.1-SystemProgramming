@@ -139,6 +139,7 @@ namespace SystemProgramming.Lesson3LLAPI
         {
             byte[] buffer = Encoding.Unicode.GetBytes(message);
             NetworkTransport.Send(_clientHostID, _clientConnectionID, _clientChannel, buffer, message.Length * sizeof(char), out _error);
+            OnClientConsoleNewData.Invoke($"Send {{{_clientHostID}, {_clientConnectionID}, {_clientChannel}}} / {message}");
 
             if ((NetworkError)_error != NetworkError.Ok)
             {

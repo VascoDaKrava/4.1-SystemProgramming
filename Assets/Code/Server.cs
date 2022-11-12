@@ -17,7 +17,7 @@ namespace SystemProgramming.Lesson3LLAPI
 
         public override string ToString()
         {
-            return $"Host {HostID}. Connection {ConnectionID}. Channel {ChannelID}.";
+            return $"Host {HostID}, Connection {ConnectionID}, Channel {ChannelID}";
         }
 
         public void Clear()
@@ -43,6 +43,12 @@ namespace SystemProgramming.Lesson3LLAPI
 
         private const int MAX_CONNECTION = 10;
 
+        [SerializeField] private int _testHost;
+        [SerializeField] private int _testConnection;
+        [SerializeField] private int _testChannel;
+        [SerializeField] private bool _sendTest;
+
+        [Space]
         [SerializeField] private string _serverIP = "192.168.31.98";
         [SerializeField] private int _serverPort = 5805;
 
@@ -65,6 +71,12 @@ namespace SystemProgramming.Lesson3LLAPI
             if (!_isStarted)
             {
                 return;
+            }
+
+            if (_sendTest)
+            {
+                _sendTest = false;
+                ServerSendMessage("My test message", new ConnectionPoint { HostID = _testHost, ConnectionID = _testConnection, ChannelID = _testChannel });
             }
 
             _sourcePoint.Clear();
