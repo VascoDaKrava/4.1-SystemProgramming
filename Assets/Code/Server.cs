@@ -109,7 +109,7 @@ namespace SystemProgramming.Lesson3LLAPI
                         }
                         else
                         {
-                            Debug.LogWarning("S. Point {_sourcePoint} was added.");
+                            Debug.LogWarning($"S. Point {_sourcePoint} was added.");
                             _connections.Add(_sourcePoint);
                             OnServerConsoleNewData.Invoke($"Point {_sourcePoint} was added.");
                             //SendMessageToAllPoints($"User from {_sourcePoint} has connected.");

@@ -18,7 +18,7 @@ namespace SystemProgramming.Lesson3LLAPI
 
         [SerializeField] private string _clientIP = "192.168.31.148";
         //[SerializeField] private string _clientIP = "192.168.31.98";
-        [SerializeField] private int _clientPort = 20123;// 0 = random port
+        [SerializeField] private int _clientPort = 20123;// 0 = random port ?
 
         [Space]
         [SerializeField] private int _clientHostID;// Socket?
@@ -59,18 +59,21 @@ namespace SystemProgramming.Lesson3LLAPI
 
                     case NetworkEventType.ConnectEvent:
                         OnMessageReceive?.Invoke($"You have been connected to server.");
-                        Debug.LogWarning($"C. You have been connected to server.");
+                        Debug.LogWarning($"C. Catch ConnectEvent.");
+                        OnClientConsoleNewData.Invoke($"Catch ConnectEvent.");
                         break;
 
                     case NetworkEventType.DataEvent:
                         OnMessageReceive?.Invoke(message);
-                        Debug.Log($"C. User catch : \"{message}\"");
+                        Debug.Log($"C. User catch DataEvent : \"{message}\"");
+                        OnClientConsoleNewData.Invoke($"Catch DataEvent : \"{message}\"");
                         break;
 
                     case NetworkEventType.DisconnectEvent:
                         _isConnected = false;
                         OnMessageReceive?.Invoke($"You have been disconnected from server.");
-                        Debug.LogWarning($"C. You have been disconnected from server.");
+                        Debug.LogWarning($"C. Catch DisconnectEvent.");
+                        OnClientConsoleNewData.Invoke($"Catch DisconnectEvent.");
                         break;
 
                     case NetworkEventType.BroadcastEvent:
@@ -101,10 +104,20 @@ namespace SystemProgramming.Lesson3LLAPI
             {
                 _isConnected = true;
                 OnClientChangeState.Invoke(_isConnected);
+                OnClientData.Invoke($"");
+                OnClientData.Invoke($"Active : \t{_isConnected}");
+                OnClientData.Invoke($"Serv. Port : \t{_serverPort}");
+                OnClientData.Invoke($"Serv. IP : \t{_serverIP}");
+                OnClientData.Invoke($"Channel : \t{_clientChannel}");
+                OnClientData.Invoke($"Connect. : \t{_clientConnectionID}");
+                OnClientData.Invoke($"Host : \t{_clientHostID}");
+                OnClientData.Invoke($"Port : \t\t{_clientPort}");
+                OnClientData.Invoke($"IP : \t\t{_clientIP}");
             }
             else
             {
                 Debug.LogError($"C. {(NetworkError)_error}");
+                OnClientConsoleNewData.Invoke($"NetworkError. {(NetworkError)_error}");
             }
         }
 
@@ -118,6 +131,8 @@ namespace SystemProgramming.Lesson3LLAPI
             NetworkTransport.Disconnect(_clientHostID, _clientConnectionID, out _error);
             _isConnected = false;
             OnClientChangeState.Invoke(_isConnected);
+            OnClientData.Invoke($"");
+            OnClientData.Invoke($"Active : \t{_isConnected}");
         }
 
         public void ClientSendMessage(string message)
@@ -128,6 +143,7 @@ namespace SystemProgramming.Lesson3LLAPI
             if ((NetworkError)_error != NetworkError.Ok)
             {
                 Debug.LogError($"C. {(NetworkError)_error}");
+                OnClientConsoleNewData.Invoke($"NetworkError. {(NetworkError)_error}");
             }
         }
     }

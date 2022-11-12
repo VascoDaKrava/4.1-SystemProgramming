@@ -390,9 +390,25 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'New Text1111111111111111111111111111111111111111111111
+  m_text: '1
 
-    New Text1111111111111111111111111111111111111111111111'
+    2
+
+    3
+
+    4
+
+    5
+
+    6
+
+    7
+
+    8
+
+    9
+
+    0'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3936,7 +3952,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _clientIP: 192.168.31.98
-  _clientPort: 0
+  _clientPort: 58051
   _clientHostID: 0
   _clientConnectionID: 0
   _clientChannel: 0
