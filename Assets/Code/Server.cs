@@ -107,12 +107,12 @@ namespace SystemProgramming.Lesson3LLAPI
                         Debug.Log($"S. Recieve ConnectEvent from {_sourcePoint}.");
                         OnServerConsoleNewData.Invoke($"Recieve ConnectEvent from {_sourcePoint}.");
 
-                        if (_sourcePoint.HostID == _serverHostID)
-                        {
-                            Debug.LogWarning("S. This is our message? Do nothing.");
-                            OnServerConsoleNewData.Invoke("This is our message? Do nothing.");
-                            //break;
-                        }
+                        //if (_sourcePoint.HostID == _serverHostID)
+                        //{
+                        //    Debug.LogWarning("S. This is our message? Do nothing.");
+                        //    OnServerConsoleNewData.Invoke("This is our message? Do nothing.");
+                        //    //break;
+                        //}
 
                         if (_connections.Contains(_sourcePoint))
                         {
@@ -124,12 +124,12 @@ namespace SystemProgramming.Lesson3LLAPI
                             Debug.LogWarning($"S. Point {_sourcePoint} was added.");
                             _connections.Add(_sourcePoint);
                             OnServerConsoleNewData.Invoke($"Point {_sourcePoint} was added.");
-                            //SendMessageToAllPoints($"User from {_sourcePoint} has connected.");
+                            SendMessageToAllPoints($"User from {_sourcePoint} has connected.");
                         }
                         break;
 
                     case NetworkEventType.DataEvent:
-                        //SendMessageToAllPoints($"User from {sourceHostID}: {message}");
+                        SendMessageToAllPoints($"User from {_sourcePoint}: {message}");
                         Debug.Log($"S. DataEvent. From {_sourcePoint}: {message}");
                         OnServerConsoleNewData.Invoke($"DataEvent. From {_sourcePoint}: {message}");
                         break;

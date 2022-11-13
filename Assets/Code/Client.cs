@@ -70,10 +70,11 @@ namespace SystemProgramming.Lesson3LLAPI
                         break;
 
                     case NetworkEventType.DisconnectEvent:
-                        _isConnected = false;
-                        OnMessageReceive?.Invoke($"You have been disconnected from server.");
                         Debug.LogWarning($"C. Catch DisconnectEvent.");
                         OnClientConsoleNewData.Invoke($"Catch DisconnectEvent.");
+                        _isConnected = false;
+                        OnMessageReceive?.Invoke($"You have been disconnected from server.");
+                        OnClientChangeState.Invoke(_isConnected);
                         break;
 
                     case NetworkEventType.BroadcastEvent:
