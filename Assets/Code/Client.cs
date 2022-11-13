@@ -15,6 +15,7 @@ namespace SystemProgramming.Lesson3LLAPI
         public event Action<string> OnClientData;
 
         private const int MAX_CONNECTION = 10;
+        private const string LOGIN_PREFIX = "MyLogin:";
 
         [SerializeField] public string ClientIP;// = "192.168.31.148";
         //[SerializeField] private string _clientIP = "192.168.31.98";
@@ -32,6 +33,8 @@ namespace SystemProgramming.Lesson3LLAPI
         [Space]
         [SerializeField] private bool _isConnected = false;
         [SerializeField] private byte _error;
+
+        private string _login;
 
         private void Update()
         {
@@ -61,6 +64,7 @@ namespace SystemProgramming.Lesson3LLAPI
                         OnMessageReceive?.Invoke($"You have been connected to server.");
                         Debug.LogWarning($"C. Catch ConnectEvent.");
                         OnClientConsoleNewData.Invoke($"Catch ConnectEvent.");
+                        ClientSendMessage($"{LOGIN_PREFIX}{_login}");
                         break;
 
                     case NetworkEventType.DataEvent:
@@ -90,8 +94,9 @@ namespace SystemProgramming.Lesson3LLAPI
             ClientDisconnect();
         }
 
-        public void ClientConnect()
+        public void ClientConnect(string login)
         {
+            _login = login;
             ConnectionConfig cc = new ConnectionConfig();
             _clientChannel = cc.AddChannel(QosType.Reliable);
             HostTopology topology = new HostTopology(cc, MAX_CONNECTION);
@@ -113,11 +118,13 @@ namespace SystemProgramming.Lesson3LLAPI
                 OnClientData.Invoke($"Host : \t{_clientHostID}");
                 OnClientData.Invoke($"Port : \t\t{ClientPort}");
                 OnClientData.Invoke($"IP : \t\t{ClientIP}");
+
+                //ClientSendMessage($"{LOGIN_PREFIX}{login}");
             }
             else
             {
                 Debug.LogError($"C. {(NetworkError)_error}");
-                OnClientConsoleNewData.Invoke($"NetworkError. {(NetworkError)_error}");
+                OnClientConsoleNewData.Invoke($"ClientConnect NetworkError. {(NetworkError)_error}");
             }
         }
 
@@ -144,7 +151,7 @@ namespace SystemProgramming.Lesson3LLAPI
             if ((NetworkError)_error != NetworkError.Ok)
             {
                 Debug.LogError($"C. {(NetworkError)_error}");
-                OnClientConsoleNewData.Invoke($"NetworkError. {(NetworkError)_error}");
+                OnClientConsoleNewData.Invoke($"ClientSendMessage NetworkError. {(NetworkError)_error}");
             }
         }
     }

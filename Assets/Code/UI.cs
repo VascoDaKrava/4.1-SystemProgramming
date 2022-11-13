@@ -14,6 +14,15 @@ namespace SystemProgramming.Lesson3LLAPI
         [SerializeField] private Color _inactiveColor = Color.red;
 
         [Space]
+        [SerializeField] private Transform _chatMenu;
+        [SerializeField] private Transform _loginMenu;
+
+        [Space]
+        [SerializeField] private TMP_InputField _loginInputField;
+        [SerializeField] private Button _loginButton;
+
+        [Space]
+        [Space]
         [SerializeField] private Server _server;
         [SerializeField] private TMP_Text _titleServer;
         [SerializeField] private Button _buttonSetServerData;
@@ -38,6 +47,7 @@ namespace SystemProgramming.Lesson3LLAPI
 
         [Space]
         [SerializeField] private TMP_Text _textField;
+        [SerializeField] private TMP_Text _clientLogin;
         [SerializeField] private TMP_InputField _inputField;
         [SerializeField] private Button _buttonSendMessage;
 
@@ -67,8 +77,12 @@ namespace SystemProgramming.Lesson3LLAPI
             _buttonConnectClient.onClick.AddListener(ClientConnectHandler);
             _buttonDisconnectClient.onClick.AddListener(ClientDisconnectHandler);
 
+            _loginInputField.onEndEdit.AddListener(LoginInputHandler);
+            _loginButton.onClick.AddListener(() => { LoginInputHandler(_loginInputField.text); });
+
             _inputField.onEndEdit.AddListener(ClientSendMessageHandler);
-            _buttonSendMessage.onClick.AddListener(delegate { ClientSendMessageHandler(_inputField.text); });
+            //_buttonSendMessage.onClick.AddListener(delegate { ClientSendMessageHandler(_inputField.text); });
+            _buttonSendMessage.onClick.AddListener(() => { ClientSendMessageHandler(_inputField.text); });
 
             _client.OnMessageReceive += ClientReceiveMessageHandler;
             _client.OnClientChangeState += OnClientChangeStateHandler;
@@ -89,6 +103,9 @@ namespace SystemProgramming.Lesson3LLAPI
             _buttonSetClientData.onClick.RemoveAllListeners();
             _buttonConnectClient.onClick.RemoveAllListeners();
             _buttonDisconnectClient.onClick.RemoveAllListeners();
+
+            _loginInputField.onEndEdit.RemoveAllListeners();
+            _loginButton.onClick.RemoveAllListeners();
 
             _inputField.onEndEdit.RemoveAllListeners();
             _buttonSendMessage.onClick.RemoveAllListeners();
@@ -146,6 +163,7 @@ namespace SystemProgramming.Lesson3LLAPI
 
         private void OnClientChangeStateHandler(bool state)
         {
+            _chatMenu.gameObject.SetActive(state);
             _buttonConnectClient.interactable = !state;
             _buttonDisconnectClient.interactable = state;
             _titleClient.color = state ? _activeColor : _inactiveColor;
@@ -163,7 +181,14 @@ namespace SystemProgramming.Lesson3LLAPI
 
         private void ClientConnectHandler()
         {
-            _client.ClientConnect();
+            _loginMenu.gameObject.SetActive(true);
+        }
+
+        private void LoginInputHandler(string login)
+        {
+            _loginMenu.gameObject.SetActive(false);
+            _clientLogin.text = login;
+            _client.ClientConnect(login);
         }
 
         private void ClientDisconnectHandler()

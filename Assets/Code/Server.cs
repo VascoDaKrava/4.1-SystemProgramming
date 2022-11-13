@@ -7,33 +7,6 @@ using UnityEngine.Networking;
 
 namespace SystemProgramming.Lesson3LLAPI
 {
-    [Serializable]
-    public struct ConnectionPoint
-    {
-        public int HostID;
-        public int ConnectionID;
-        public int ChannelID;
-        public string UserName;
-
-        public override string ToString()
-        {
-            return $"Host {HostID}, Connection {ConnectionID}, Channel {ChannelID}";
-        }
-
-        public void Clear()
-        {
-            HostID = 0;
-            ConnectionID = 0;
-            ChannelID = 0;
-            UserName = "";
-        }
-
-        //public int CompareTo(object obj)
-        //{
-        //    throw new NotImplementedException();
-        //}
-    }
-
     [Obsolete]
     public sealed class Server : MonoBehaviour
     {
@@ -42,6 +15,7 @@ namespace SystemProgramming.Lesson3LLAPI
         public event Action<string> OnServerData;
 
         private const int MAX_CONNECTION = 10;
+        private const string LOGIN_PREFIX = "MyLogin:";
 
         [SerializeField] private int _testHost;
         [SerializeField] private int _testConnection;
@@ -63,6 +37,8 @@ namespace SystemProgramming.Lesson3LLAPI
         [Space]
         [SerializeField]
         private List<ConnectionPoint> _connections = new();
+
+        private Dictionary<ConnectionPoint, string> _logins = new();
 
         private ConnectionPoint _sourcePoint = new();
 
@@ -124,22 +100,39 @@ namespace SystemProgramming.Lesson3LLAPI
                             Debug.LogWarning($"S. Point {_sourcePoint} was added.");
                             _connections.Add(_sourcePoint);
                             OnServerConsoleNewData.Invoke($"Point {_sourcePoint} was added.");
-                            SendMessageToAllPoints($"User from {_sourcePoint} has connected.");
+                            //SendMessageToAllPoints($"New user has connected.");
                         }
                         break;
 
                     case NetworkEventType.DataEvent:
-                        SendMessageToAllPoints($"User from {_sourcePoint}: {message}");
+                        if (message.StartsWith(LOGIN_PREFIX))
+                        {
+                            if (_connections.Contains(_sourcePoint))
+                            {
+                                _logins.Add(_sourcePoint, message.Remove(0, LOGIN_PREFIX.Length));
+                                SendMessageToAllPoints($"New user {_logins[_sourcePoint]} has connected.");
+                            }
+                            //var index = _connections.IndexOf(_sourcePoint);
+                            //var tempAccountData = _connections[index];
+                            //tempAccountData.UserName = message.Remove(0, LOGIN_PREFIX.Length);
+                            //_connections[index] = tempAccountData;
+                        }
+                        else
+                        {
+                            //SendMessageToAllPoints($"User from {_sourcePoint}: {message}");
+                            SendMessageToAllPoints($"{_logins[_sourcePoint]}: {message}");
+                        }
                         Debug.Log($"S. DataEvent. From {_sourcePoint}: {message}");
                         OnServerConsoleNewData.Invoke($"DataEvent. From {_sourcePoint}: {message}");
                         break;
 
                     case NetworkEventType.DisconnectEvent:
-                        _connections.Remove(_sourcePoint);
+                        Debug.Log($"S. Point {_sourcePoint} has disconnected.");
+                        OnServerConsoleNewData.Invoke($"User {_logins[_sourcePoint]} has disconnected.");
+                        SendMessageToAllPoints($"User {_logins[_sourcePoint]} has disconnected.");
                         OnServerConsoleNewData.Invoke($"Point {_sourcePoint} was removed.");
-                        Debug.Log($"S. User {_sourcePoint} has disconnected.");
-                        OnServerConsoleNewData.Invoke($"User {_sourcePoint} has disconnected.");
-                        SendMessageToAllPoints($"User from {_sourcePoint} has disconnected.");
+                        _connections.Remove(_sourcePoint);
+                        _logins.Remove(_sourcePoint);
                         break;
 
                     case NetworkEventType.BroadcastEvent:
@@ -218,7 +211,6 @@ namespace SystemProgramming.Lesson3LLAPI
         private void ServerSendMessage(string message, ConnectionPoint connectionPoint)
         {
             byte[] buffer = Encoding.Unicode.GetBytes(message);
-            //NetworkTransport.Send(_serverSocket, connectionPoint.ConnectionID, _reliableChannel, buffer, message.Length * sizeof(char), out _error);
             Debug.Log($"S. Send \"{message}\" to {connectionPoint}.");
             OnServerConsoleNewData.Invoke($"S. Send \"{message}\" to {connectionPoint}.");
             NetworkTransport.Send(connectionPoint.HostID, connectionPoint.ConnectionID, connectionPoint.ChannelID, buffer, message.Length * sizeof(char), out _error);
