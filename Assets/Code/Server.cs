@@ -137,9 +137,9 @@ namespace SystemProgramming.Lesson3LLAPI
                     case NetworkEventType.DisconnectEvent:
                         _connections.Remove(_sourcePoint);
                         OnServerConsoleNewData.Invoke($"Point {_sourcePoint} was removed.");
-                        //SendMessageToAll($"Player {connectionID} has disconnected.");
                         Debug.Log($"S. User {_sourcePoint} has disconnected.");
                         OnServerConsoleNewData.Invoke($"User {_sourcePoint} has disconnected.");
+                        SendMessageToAllPoints($"User from {_sourcePoint} has disconnected.");
                         break;
 
                     case NetworkEventType.BroadcastEvent:

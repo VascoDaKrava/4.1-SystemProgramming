@@ -60,13 +60,15 @@ namespace SystemProgramming.Lesson3LLAPI
             _client.ServerPort = _server.ServerPort;
 
             _buttonSetServerData.onClick.AddListener(SetServerDataHandler);
-            _buttonSetClientData.onClick.AddListener(SetClientDataHandler);
-
             _buttonStartServer.onClick.AddListener(ServerStartHandler);
             _buttonStopServer.onClick.AddListener(ServerStopHandler);
+
+            _buttonSetClientData.onClick.AddListener(SetClientDataHandler);
             _buttonConnectClient.onClick.AddListener(ClientConnectHandler);
             _buttonDisconnectClient.onClick.AddListener(ClientDisconnectHandler);
-            _buttonSendMessage.onClick.AddListener(ClientSendMessageHandler);
+
+            _inputField.onEndEdit.AddListener(ClientSendMessageHandler);
+            _buttonSendMessage.onClick.AddListener(delegate { ClientSendMessageHandler(_inputField.text); });
 
             _client.OnMessageReceive += ClientReceiveMessageHandler;
             _client.OnClientChangeState += OnClientChangeStateHandler;
@@ -81,12 +83,14 @@ namespace SystemProgramming.Lesson3LLAPI
         private void OnDestroy()
         {
             _buttonSetServerData.onClick.RemoveAllListeners();
-            _buttonSetClientData.onClick.RemoveAllListeners();
-
             _buttonStartServer.onClick.RemoveAllListeners();
             _buttonStopServer.onClick.RemoveAllListeners();
+            
+            _buttonSetClientData.onClick.RemoveAllListeners();
             _buttonConnectClient.onClick.RemoveAllListeners();
             _buttonDisconnectClient.onClick.RemoveAllListeners();
+
+            _inputField.onEndEdit.RemoveAllListeners();
             _buttonSendMessage.onClick.RemoveAllListeners();
 
             _client.OnMessageReceive -= ClientReceiveMessageHandler;
@@ -167,9 +171,9 @@ namespace SystemProgramming.Lesson3LLAPI
             _client.ClientDisconnect();
         }
 
-        private void ClientSendMessageHandler()
+        private void ClientSendMessageHandler(string message)
         {
-            _client.ClientSendMessage(_inputField.text);
+            _client.ClientSendMessage(message);
             _inputField.text = "";
         }
 

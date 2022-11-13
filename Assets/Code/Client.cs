@@ -98,7 +98,6 @@ namespace SystemProgramming.Lesson3LLAPI
             NetworkTransport.Init();
 
             _clientHostID = NetworkTransport.AddHost(topology, ClientPort, ClientIP);
-            //_clientHostID = NetworkTransport.AddHost(topology, _serverPort);
             _clientConnectionID = NetworkTransport.Connect(_clientHostID, ServerIP, ServerPort, 0, out _error);
 
             if ((NetworkError)_error == NetworkError.Ok)
