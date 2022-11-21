@@ -14,9 +14,9 @@ namespace SystemProgramming.Lesson4HLAPI_FPS
         private CharacterController characterController;
         private MouseLook mouseLook;
         private Vector3 currentVelocity;
-        
+
         protected override FireAction fireAction { get; set; }
-        
+
         protected override void Initiate()
         {
             base.Initiate();
@@ -27,13 +27,14 @@ namespace SystemProgramming.Lesson4HLAPI_FPS
             mouseLook = GetComponentInChildren<MouseLook>();
             mouseLook ??= gameObject.AddComponent<MouseLook>();
         }
-        
+
         public override void Movement()
         {
             if (mouseLook != null && mouseLook.PlayerCamera != null)
             {
                 mouseLook.PlayerCamera.enabled = hasAuthority;
             }
+
             if (hasAuthority)
             {
                 var moveX = Input.GetAxis("Horizontal") * movingSpeed;
@@ -41,28 +42,31 @@ namespace SystemProgramming.Lesson4HLAPI_FPS
                 var movement = new Vector3(moveX, 0, moveZ);
                 movement = Vector3.ClampMagnitude(movement, movingSpeed);
                 movement *= Time.deltaTime;
+
                 if (Input.GetKey(KeyCode.LeftShift))
                 {
                     movement *= acceleration;
                 }
+
                 movement.y = gravity;
                 movement = transform.TransformDirection(movement);
                 characterController.Move(movement);
                 mouseLook.Rotation();
                 CmdUpdatePosition(transform.position);
+                CmdUpdateRotation(transform.rotation);
             }
             else
             {
-                transform.position = Vector3.SmoothDamp(transform.position,
-                    serverPosition, ref currentVelocity, movingSpeed * Time.deltaTime);
+                transform.position = Vector3.SmoothDamp(transform.position, serverPosition, ref currentVelocity, movingSpeed * Time.deltaTime);
+                transform.rotation = serverRotation;
             }
         }
-        
+
         private void Start()
         {
             Initiate();
         }
-        
+
         private void OnGUI()
         {
             if (Camera.main == null)

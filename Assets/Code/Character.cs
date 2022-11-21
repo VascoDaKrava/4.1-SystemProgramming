@@ -12,6 +12,7 @@ namespace SystemProgramming.Lesson4HLAPI_FPS
         protected abstract FireAction fireAction { get; set; }
         
         [SyncVar] protected Vector3 serverPosition;
+        [SyncVar] protected Quaternion serverRotation;
         
         protected virtual void Initiate()
         {
@@ -33,7 +34,13 @@ namespace SystemProgramming.Lesson4HLAPI_FPS
         {
             serverPosition = position;
         }
-        
+
+        [Command]
+        protected void CmdUpdateRotation(Quaternion rotation)
+        {
+            serverRotation = rotation;
+        }
+
         public abstract void Movement();
     
     }
