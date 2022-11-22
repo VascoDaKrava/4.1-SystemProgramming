@@ -8,7 +8,7 @@ namespace SystemProgramming.Lesson4HLAPI_FPS
     [Obsolete]
     public sealed class RayShooter : FireAction
     {
-        private new Camera camera;
+        private Camera camera;
 
         protected override void Start()
         {

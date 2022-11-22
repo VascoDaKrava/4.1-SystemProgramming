@@ -176,13 +176,12 @@ MonoBehaviour:
   m_ScriptCRCCheck: 1
   m_MaxDelay: 0.01
   m_LogLevel: 2
-  m_PlayerPrefab: {fileID: 7805671848062676493, guid: a2ee044da473e854baa6fbc2a7b1d6f9, type: 3}
+  m_PlayerPrefab: {fileID: 4378401806695877673, guid: 0ebd039824183b04cb1ca454e9fd1216, type: 3}
   m_AutoCreatePlayer: 1
-  m_PlayerSpawnMethod: 0
+  m_PlayerSpawnMethod: 1
   m_OfflineScene: LessonFourFPS_offline
   m_OnlineScene: LessonFourFPS_online
-  m_SpawnPrefabs:
-  - {fileID: 4378401806695877673, guid: 0ebd039824183b04cb1ca454e9fd1216, type: 3}
+  m_SpawnPrefabs: []
   m_CustomConfig: 0
   m_MaxConnections: 4
   m_ConnectionConfig:
@@ -225,7 +224,7 @@ MonoBehaviour:
     m_MaxTimerTimeout: 12000
     m_MinNetSimulatorTimeout: 1
     m_MaxNetSimulatorTimeout: 12000
-  m_Channels: 
+  m_Channels: 0500000000000000
   m_UseWebSockets: 0
   m_UseSimulator: 0
   m_SimulatedLatency: 1
@@ -394,7 +393,7 @@ PrefabInstance:
       objectReference: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
     - target: {fileID: 2611085331304707528, guid: 90139c85f142874438386543c5877fc2, type: 3}
       propertyPath: m_RootOrder
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2611085331304707528, guid: 90139c85f142874438386543c5877fc2, type: 3}
       propertyPath: m_LocalPosition.x
@@ -565,5 +564,5 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}

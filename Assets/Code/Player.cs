@@ -14,7 +14,8 @@ namespace SystemProgramming.Lesson4HLAPI_FPS
 
         private void Start()
         {
-            SpawnCharacter();
+            // Uncomment for manual spawn
+            //SpawnCharacter();
         }
 
         private void SpawnCharacter()

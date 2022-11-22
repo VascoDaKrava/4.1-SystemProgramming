@@ -13,7 +13,7 @@ namespace SystemProgramming.Lesson4HLAPI_FPS
         [Range(0.0f, 90.0f)][SerializeField] private float maxVert = 45.0f;
         private float rotationX = .0f;
         private float rotationY = .0f;
-        private new Camera camera;
+        private Camera camera;
 
         public Camera PlayerCamera => camera;
 
